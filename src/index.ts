@@ -278,10 +278,21 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
   document.addEventListener('lms-widget:insert-content', (event: Event) => {
     const customEvt = event as CustomEvent;
     const content = customEvt.detail?.content || customEvt.detail?.payload || '';
+    
+    console.log(`[LMS Widget Manager] Caught global 'lms-widget:insert-content' event.`);
+    console.log(`[LMS Widget Manager] Active controllers found: ${activeControllers.length}`);
+    
     if (content) {
-      activeControllers.forEach((controller) => {
-        controller.insertContent(content);
-      });
+      if (activeControllers.length === 0) {
+        console.warn(`[LMS Widget Manager] Received insert-content, but no widgets are currently active or initialized.`);
+      } else {
+        activeControllers.forEach((controller, index) => {
+          console.log(`[LMS Widget Manager] Routing insert-content to widget controller #${index + 1}`);
+          controller.insertContent(content);
+        });
+      }
+    } else {
+      console.warn(`[LMS Widget Manager] Received insert-content but no content payload was found in event.detail`);
     }
   });
 }
