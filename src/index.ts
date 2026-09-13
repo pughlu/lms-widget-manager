@@ -285,12 +285,29 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
     if (content) {
       if (activeControllers.length === 0) {
         console.warn(`[LMS Widget Manager] Received insert-content, but no widgets are currently active or initialized.`);
-      } else {
-        activeControllers.forEach((controller, index) => {
-          console.log(`[LMS Widget Manager] Routing insert-content to widget controller #${index + 1}`);
-          controller.insertContent(content);
-        });
+        return;
       }
+
+      // Smart Routing: Try to find which widget should receive this based on the button's DOM location
+      const targetNode = event.target as Node;
+      if (targetNode && targetNode.nodeType === 1) { // Element node
+        const element = targetNode as Element;
+        const questionContainer = element.closest('.que, .form-item, form');
+        if (questionContainer) {
+          const targetedControllers = activeControllers.filter(c => questionContainer.contains(c.getMountPoint()));
+          if (targetedControllers.length > 0) {
+            console.log(`[LMS Widget Manager] Smart routed insert-content to ${targetedControllers.length} widget(s) in the same question container.`);
+            targetedControllers.forEach((controller) => controller.insertContent(content));
+            return;
+          }
+        }
+      }
+
+      // Fallback: Broadcast to all active controllers
+      console.log(`[LMS Widget Manager] Broadcasting insert-content to all ${activeControllers.length} widget(s).`);
+      activeControllers.forEach((controller) => {
+        controller.insertContent(content);
+      });
     } else {
       console.warn(`[LMS Widget Manager] Received insert-content but no content payload was found in event.detail`);
     }

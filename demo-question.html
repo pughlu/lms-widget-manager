@@ -57,7 +57,7 @@
             this.el.dispatchEvent(new Event('input', { bubbles: true }));
           });
 
-          // D. Wire HTML "Use this code" template buttons
+          // D. Wire HTML "Use this code" template buttons using decoupled events!
           const questionRoot = this.el.closest('.que, .form-item, form') || document;
           questionRoot.querySelectorAll('.use-template-btn').forEach((btn) => {
             btn.addEventListener('click', (e) => {
@@ -67,13 +67,12 @@
               if (pre) {
                 const raw = pre.innerText || pre.textContent || '';
                 const content = raw.endsWith('\n') ? raw : raw + '\n';
-                const start = this.el.selectionStart ?? this.el.value.length;
-                const end = this.el.selectionEnd ?? this.el.value.length;
-                const val = this.el.value;
-                this.el.value = val.substring(0, start) + content + val.substring(end);
-                this.el.selectionStart = this.el.selectionEnd = start + content.length;
-                this.el.focus();
-                this.el.dispatchEvent(new Event('input', { bubbles: true }));
+                
+                // Dispatch event from the button so smart routing can detect its location
+                btn.dispatchEvent(new CustomEvent('lms-widget:insert-content', {
+                  bubbles: true,
+                  detail: { content }
+                }));
 
                 const orig = btn.innerHTML;
                 btn.innerHTML = '✅ Inserted!';
@@ -118,7 +117,5 @@
 
 <!-- 5. Load the Manager (Only needs to load once per page, but safe to repeat) -->
 <p>
-  <script type="module"
-    src="https://python-web-ide.pages.dev/lms-widget-manager.es.js">
-  </script>
+  <script type="module" src="./dist/lms-widget-manager.es.js"></script>
 </p>
