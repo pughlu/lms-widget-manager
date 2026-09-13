@@ -198,11 +198,10 @@ If you provide an external button in Moodle question text:
     // Append trailing newline so subsequent typing starts on a fresh line
     const textToInsert = code.endsWith('\n') ? code : code + '\n';
 
-    // Access the active controller
-    const controller = window.LMSWidgetManager.activeControllers[0];
-    if (controller) {
-      controller.insertContent(textToInsert);
-    }
+    // Fully decoupled: dispatch event and let LMSWidgetManager route it
+    document.dispatchEvent(new CustomEvent('lms-widget:insert-content', {
+      detail: { content: textToInsert }
+    }));
   });
 </script>
 ```
@@ -327,17 +326,26 @@ When the user types or alters state within the widget:
 
 To deliver an integrated look without double scrollbars:
 1. **Width Responsibility**: The host page controls widget width. Set your widget style to `width: 100%`.
-2. **Height Responsibility**: The widget measures its own internal scroll height and emits `SYNC_HEIGHT`:
+2. **Height Responsibility**: The widget should observe its own content height and emit `SYNC_HEIGHT`.
+   **CRITICAL**: Do NOT use `window.addEventListener('resize')` to trigger height sync. Because the host changes the iframe's height, this will create an infinite feedback doom loop where the widget continuously shrinks.
+   Instead, use a `ResizeObserver` on your main content container:
    ```javascript
-   function notifyHeight() {
-     const height = document.documentElement.scrollHeight || document.body.scrollHeight;
-     window.parent.postMessage({
-       type: 'SYNC_HEIGHT',
-       payload: { height: height }
-     }, '*');
-   }
+   let lastHeight = 0;
+   const container = document.querySelector('.widget-container'); // Your main wrapper
+   const resizeObserver = new ResizeObserver((entries) => {
+     for (let entry of entries) {
+       const height = entry.target.offsetHeight;
+       if (height !== lastHeight) {
+         lastHeight = height;
+         window.parent.postMessage({
+           type: 'SYNC_HEIGHT',
+           payload: { height }
+         }, '*');
+       }
+     }
+   });
+   resizeObserver.observe(container);
    ```
-3. **Responsive Width Changes**: Attach a `ResizeObserver` to your widget root. Whenever the window or container width changes, re-measure and emit the new height.
 
 ---
 
@@ -552,16 +560,23 @@ Here is a complete, copy-pasteable implementation of an `<iframe>` widget:
 
     editor.addEventListener('input', triggerSync);
 
-    // 3. Dynamic Height Sync
-    function notifyHeight() {
-      const height = document.documentElement.scrollHeight;
-      window.parent.postMessage({
-        type: 'SYNC_HEIGHT',
-        payload: { height }
-      }, '*');
-    }
-
-    window.addEventListener('resize', notifyHeight);
+    // 3. Dynamic Height Sync (using ResizeObserver to avoid feedback loops)
+    let lastHeight = 0;
+    const container = document.getElementById('toolbar').parentElement; // body or wrapper
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (let entry of entries) {
+        const height = entry.target.offsetHeight || entry.target.scrollHeight;
+        if (height !== lastHeight) {
+          lastHeight = height;
+          window.parent.postMessage({
+            type: 'SYNC_HEIGHT',
+            payload: { height }
+          }, '*');
+        }
+      }
+    });
+    // Assuming you wrap the body content in a container, or observe body
+    resizeObserver.observe(document.body);
 
     // 4. Request content once ready
     window.parent.postMessage({ type: 'REQUEST_CONTENT' }, '*');

@@ -273,4 +273,15 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
     // Already loaded or interactive
     bootstrap();
   }
+
+  // Global Event Bus for Host Scripts (Decoupled Integration)
+  document.addEventListener('lms-widget:insert-content', (event: Event) => {
+    const customEvt = event as CustomEvent;
+    const content = customEvt.detail?.content || customEvt.detail?.payload || '';
+    if (content) {
+      activeControllers.forEach((controller) => {
+        controller.insertContent(content);
+      });
+    }
+  });
 }
