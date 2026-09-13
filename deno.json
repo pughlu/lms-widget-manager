@@ -1,0 +1,14 @@
+{
+  "nodeModulesDir": "auto",
+  "compilerOptions": {
+    "lib": ["deno.ns", "dom", "dom.iterable", "esnext"],
+    "strict": true,
+    "noImplicitAny": true
+  },
+  "tasks": {
+    "dev": "deno run -A npm:vite --port 5173 --host",
+    "test": "deno test -A --sloppy-imports tests/",
+    "check": "deno check --sloppy-imports src/index.ts",
+    "bundle": "deno run -A --sloppy-imports npm:vite build"
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "name": "lms-widget-manager",
+  "version": "1.0.0",
+  "description": "Standalone, framework-agnostic orchestrator between LMS host environments and embedded widgets.",
+  "main": "dist/lms-widget-manager.cjs.js",
+  "module": "dist/lms-widget-manager.es.js",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build && tsc --emitDeclarationOnly",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "keywords": [
+    "moodle",
+    "lms",
+    "widget",
+    "postmessage",
+    "iframe",
+    "web-components"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "jsdom": "^26.0.0",
+    "typescript": "^5.7.3",
+    "vite": "^6.2.0",
+    "vitest": "^3.0.7"
+  }
+}

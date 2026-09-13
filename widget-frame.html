@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IFrame Code Editor Widget</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      background: #1e1e2e;
+      color: #cdd6f4;
+      padding: 0;
+      overflow: hidden;
+    }
+    .widget-container {
+      display: flex;
+      flex-direction: column;
+      border: 1px solid #313244;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #1e1e2e;
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 14px;
+      background: #181825;
+      border-bottom: 1px solid #313244;
+      font-size: 12px;
+    }
+    .title {
+      font-weight: 600;
+      color: #fab387;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .badges-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .mode-pill {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 2px 7px;
+      border-radius: 4px;
+      border: 1px solid currentColor;
+    }
+    .mode-attempt {
+      color: #89b4fa;
+      background: rgba(137, 180, 250, 0.12);
+      border-color: #89b4fa;
+    }
+    .mode-edit {
+      color: #f9e2af;
+      background: rgba(249, 226, 175, 0.12);
+      border-color: #f9e2af;
+    }
+    .mode-grade {
+      color: #a6e3a1;
+      background: rgba(166, 227, 161, 0.12);
+      border-color: #a6e3a1;
+    }
+    .mode-review {
+      color: #cba6f7;
+      background: rgba(203, 166, 247, 0.12);
+      border-color: #cba6f7;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-weight: 500;
+      font-size: 11px;
+      background: #313244;
+      color: #a6adc8;
+      transition: all 0.2s ease;
+    }
+    .badge.synced {
+      background: rgba(166, 227, 161, 0.15);
+      color: #a6e3a1;
+    }
+    .badge.syncing {
+      background: rgba(249, 226, 175, 0.15);
+      color: #f9e2af;
+    }
+    .badge.locked {
+      background: rgba(243, 139, 168, 0.2);
+      color: #f38ba8;
+    }
+    .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    /* Contextual Mode Banners */
+    .context-banner {
+      display: none;
+      padding: 6px 12px;
+      font-size: 11px;
+      border-bottom: 1px solid #313244;
+      align-items: center;
+      gap: 8px;
+    }
+    .banner-edit {
+      background: #28241c;
+      color: #f9e2af;
+      border-color: #453a23;
+    }
+    .banner-grade {
+      background: #1b2923;
+      color: #a6e3a1;
+      border-color: #274d39;
+    }
+    .banner-review {
+      background: #251e33;
+      color: #cba6f7;
+      border-color: #44325c;
+    }
+
+    .editor-body {
+      display: flex;
+      position: relative;
+    }
+    .line-numbers {
+      padding: 12px 10px;
+      color: #585b70;
+      user-select: none;
+      text-align: right;
+      font-size: 13px;
+      line-height: 1.5;
+      background: #181825;
+      border-right: 1px solid #313244;
+      min-width: 32px;
+    }
+    textarea {
+      flex: 1;
+      width: 100%;
+      padding: 12px 14px;
+      background: transparent;
+      border: none;
+      color: #cdd6f4;
+      font-family: inherit;
+      font-size: 13px;
+      line-height: 1.5;
+      min-height: 180px;
+      resize: vertical;
+      outline: none;
+    }
+    textarea:read-only {
+      background: rgba(24, 24, 37, 0.5);
+      cursor: not-allowed;
+    }
+
+    /* Extra Teacher Sections */
+    .teacher-section {
+      display: none;
+      border-top: 1px dashed #45475a;
+      background: #181825;
+      padding: 8px 12px;
+      font-size: 11px;
+    }
+    .teacher-title {
+      color: #fab387;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .teacher-code {
+      color: #a6adc8;
+      font-family: inherit;
+      background: #11111b;
+      padding: 6px 8px;
+      border-radius: 4px;
+      white-space: pre-wrap;
+    }
+
+    .footer {
+      display: flex;
+      justify-content: space-between;
+      padding: 6px 14px;
+      background: #181825;
+      border-top: 1px solid #313244;
+      font-size: 11px;
+      color: #6c7086;
+    }
+  </style>
+</head>
+<body>
+  <div class="widget-container">
+    <div class="header">
+      <div class="title">
+        <span>📦 Python Code Editor</span>
+        <span class="mode-pill mode-attempt" id="mode-pill">ATTEMPT</span>
+      </div>
+      <div class="badges-group">
+        <button type="button" id="btn-use-template" style="display: none; background: #313244; color: #fab387; border: 1px solid #45475a; border-radius: 4px; padding: 2px 8px; font-size: 11px; cursor: pointer; font-family: inherit;">✨ Insert Starter</button>
+        <div class="badge synced" id="status-badge">
+          <span class="dot"></span>
+          <span id="status-text">Connected</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mode Specific Context Banners -->
+    <div id="banner-edit" class="context-banner banner-edit">
+      <span>🛠️ <strong>Authoring Mode:</strong> Teacher controls active. Test cells <code># %% [test]</code> are visible and editable.</span>
+    </div>
+    <div id="banner-grade" class="context-banner banner-grade">
+      <span>⚖️ <strong>Grading Mode:</strong> Student solution is locked. Autograder test outputs & teacher scratchpad revealed.</span>
+    </div>
+    <div id="banner-review" class="context-banner banner-review">
+      <span>🔍 <strong>Review Mode:</strong> Post-quiz submission view. Student solution is read-only.</span>
+    </div>
+
+    <div class="editor-body">
+      <div class="line-numbers" id="line-numbers">1<br>2<br>3<br>4<br>5<br>6</div>
+      <textarea id="editor" spellcheck="false" placeholder="def fibonacci(n):&#10;    # Type Python code here..."></textarea>
+    </div>
+
+    <!-- Teacher/Grading Auxiliary Panel -->
+    <div id="teacher-section" class="teacher-section">
+      <div class="teacher-title" id="teacher-section-title">Hidden Test Cells & Output</div>
+      <div class="teacher-code" id="teacher-section-code"># %% [test]
+assert fibonacci(0) == 0
+assert fibonacci(1) == 1
+assert fibonacci(10) == 55
+print("All test suites passed (3/3)")</div>
+    </div>
+
+    <div class="footer">
+      <span id="transport-label">Transport: window.postMessage</span>
+      <span id="stats">0 chars | 1 lines</span>
+    </div>
+  </div>
+
+  <script>
+    const textarea = document.getElementById('editor');
+    const statusBadge = document.getElementById('status-badge');
+    const statusText = document.getElementById('status-text');
+    const modePill = document.getElementById('mode-pill');
+    const lineNumbers = document.getElementById('line-numbers');
+    const stats = document.getElementById('stats');
+    const bannerEdit = document.getElementById('banner-edit');
+    const bannerGrade = document.getElementById('banner-grade');
+    const bannerReview = document.getElementById('banner-review');
+    const teacherSection = document.getElementById('teacher-section');
+    const teacherSectionTitle = document.getElementById('teacher-section-title');
+
+    let isLocked = false;
+    let syncTimeout = null;
+    let currentMode = 'attempt';
+
+    function setStatus(status, text) {
+      statusBadge.className = `badge ${status}`;
+      statusText.textContent = text;
+    }
+
+    function applyRunMode(mode, isReadOnly) {
+      currentMode = mode || 'attempt';
+      modePill.textContent = currentMode.toUpperCase();
+      modePill.className = `mode-pill mode-${currentMode}`;
+
+      // Reset banners
+      bannerEdit.style.display = 'none';
+      bannerGrade.style.display = 'none';
+      bannerReview.style.display = 'none';
+      teacherSection.style.display = 'none';
+
+      if (currentMode === 'edit') {
+        bannerEdit.style.display = 'flex';
+        teacherSection.style.display = 'block';
+        teacherSectionTitle.textContent = '🛠️ Teacher Test Cells (Editable in Authoring Mode)';
+        textarea.readOnly = false;
+      } else if (currentMode === 'grade') {
+        bannerGrade.style.display = 'flex';
+        teacherSection.style.display = 'block';
+        teacherSectionTitle.textContent = '⚖️ Autograder Verification Output & Teacher Scratchpad';
+        textarea.readOnly = true; // Lock student code to prevent accidental modification
+      } else if (currentMode === 'review') {
+        bannerReview.style.display = 'flex';
+        textarea.readOnly = true;
+      } else {
+        // Attempt mode
+        textarea.readOnly = Boolean(isReadOnly);
+      }
+
+      if (textarea.readOnly) {
+        setStatus('locked', 'Locked / Read-Only');
+      } else {
+        setStatus('synced', 'Synced');
+      }
+    }
+
+    function updateStats() {
+      const val = textarea.value;
+      const lines = val.split('\n').length;
+      stats.textContent = `${val.length} chars | ${lines} lines`;
+
+      let nums = '';
+      for (let i = 1; i <= Math.max(lines, 6); i++) {
+        nums += `${i}<br>`;
+      }
+      lineNumbers.innerHTML = nums;
+    }
+
+    // Handle typing
+    textarea.addEventListener('input', () => {
+      if (isLocked || textarea.readOnly) return;
+
+      setStatus('syncing', 'Syncing...');
+      updateStats();
+
+      // Debounced postMessage sync
+      if (syncTimeout) clearTimeout(syncTimeout);
+      syncTimeout = setTimeout(() => {
+        const msgId = 'frame-msg-' + Math.random().toString(36).substring(2, 9);
+        window.parent.postMessage({
+          type: 'SYNC_CONTENT',
+          payload: {
+            content: textarea.value,
+            msgId: msgId
+          }
+        }, '*');
+      }, 150);
+    });
+
+    // Listen for messages from parent (WidgetController)
+    window.addEventListener('message', (event) => {
+      let data = event.data;
+      if (typeof data === 'string') {
+        try { data = JSON.parse(data); } catch { return; }
+      }
+      if (!data || typeof data !== 'object') return;
+
+      switch (data.type) {
+        case 'LOAD_CONTENT': {
+          const { content, config } = data.payload || {};
+          if (content !== undefined && content !== null) {
+            textarea.value = content;
+            updateStats();
+          }
+
+          if (config) {
+            applyRunMode(config.runMode, config.isReadOnly);
+          }
+          break;
+        }
+
+        case 'SYNC_ACK': {
+          if (!isLocked && !textarea.readOnly) {
+            setStatus('synced', 'Synced to Moodle');
+          }
+          break;
+        }
+
+        case 'INSERT_CONTENT': {
+          if (isLocked || textarea.readOnly) break;
+          const { content } = data.payload || {};
+          if (content !== undefined && content !== null) {
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+            const val = textarea.value;
+            textarea.value = val.substring(0, start) + content + val.substring(end);
+            textarea.selectionStart = textarea.selectionEnd = start + content.length;
+            textarea.focus();
+            updateStats();
+            // Trigger input event to sync back to LMS
+            textarea.dispatchEvent(new Event('input', { bubbles: true }));
+          }
+          break;
+        }
+
+        case 'ERROR_LOCKDOWN': {
+          isLocked = true;
+          textarea.disabled = true;
+          setStatus('locked', 'Locked Down');
+          break;
+        }
+      }
+    });
+
+    // Wire internal starter template button if a starter pre block is present in the parent question
+    const templateBtn = document.getElementById('btn-use-template');
+    try {
+      const parentPre = window.parent.document.querySelector('#question-1 .starter-code, #question-1 [data-lms-template-code]');
+      if (templateBtn && parentPre) {
+        templateBtn.style.display = 'inline-block';
+        templateBtn.addEventListener('click', () => {
+          if (isLocked || textarea.readOnly) return;
+          const rawText = parentPre.innerText || parentPre.textContent || '';
+          const textToInsert = rawText.endsWith('\n') ? rawText : rawText + '\n';
+          
+          const start = textarea.selectionStart;
+          const end = textarea.selectionEnd;
+          const val = textarea.value;
+          textarea.value = val.substring(0, start) + textToInsert + val.substring(end);
+          textarea.selectionStart = textarea.selectionEnd = start + textToInsert.length;
+          textarea.focus();
+          updateStats();
+          textarea.dispatchEvent(new Event('input', { bubbles: true }));
+
+          const orig = templateBtn.innerHTML;
+          templateBtn.innerHTML = '✅ Inserted!';
+          setTimeout(() => templateBtn.innerHTML = orig, 1500);
+        });
+      }
+    } catch {
+      // Cross-origin fallback
+    }
+
+    // Request initial content when loaded
+    window.parent.postMessage({ type: 'REQUEST_CONTENT' }, '*');
+    updateStats();
+  </script>
+</body>
+</html>

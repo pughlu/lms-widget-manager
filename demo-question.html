@@ -1,0 +1,124 @@
+<p>hello</p>
+<pre id="starter-code">  hello world
+</pre>
+<button type="button" class="use-template-btn" data-source="#starter-code" style="display: inline-block; margin: 4px 0 12px; padding: 4px 10px; font-size: 12px; font-weight: 500; cursor: pointer; background: #e0e7ff; color: #4338ca; border: 1px solid #c7d2fe; border-radius: 4px; transition: background 0.2s;">
+  ✨ Use this code
+</button>
+<p>goodbye</p>
+
+<!-- 1. The Mount Point Container -->
+<div id="my-unique-question-wrapper" class="lms-widget-container"
+  style="position: relative;">
+  <!-- 2. Your Custom Widget UI (Notice the data-lms-widget attribute!) -->
+  <textarea id="my-custom-editor"
+    style="width: 100%; min-height: 200px; padding: 10px; font-family: monospace; border: 2px solid #ccc;"
+    placeholder="Type your advanced answer here..." data-lms-widget=""
+    data-lms-widget-show-answerbox=""></textarea>
+
+  <!-- 3. The SDK Wrapper Logic -->
+  <script>
+    (function() {
+      // Define the Wrapper (You could also load this from an external CDN)
+      class NativeWidgetWrapper {
+        constructor(widgetElement) {
+          this.el = widgetElement;
+
+          // A. Receive data from Moodle (on load or resume)
+          this.el.addEventListener('host:load-content', (e) => {
+            this.el.value = e.detail.payload;
+            if (e.detail.config.isReadOnly || e.detail.config.runMode === 'review') {
+              this.el.disabled = true;
+              this.el.style.backgroundColor = '#f3f4f6';
+            }
+          });
+
+          // B. Send data to Moodle (when student types)
+          this.el.addEventListener('input', () => {
+            this.el.dispatchEvent(new CustomEvent(
+              'widget:sync-content', {
+                detail: {
+                  payload: this.el.value,
+                  msgId: Date.now().toString()
+                },
+                bubbles: true // Crucial: allows the Manager to hear it
+              }));
+          });
+
+          // C. Handle programmatically inserted template / starter code
+          this.el.addEventListener('host:insert-content', (e) => {
+            const raw = e.detail?.content || e.detail?.payload || '';
+            const content = raw.endsWith('\n') ? raw : raw + '\n';
+            const start = this.el.selectionStart ?? this.el.value.length;
+            const end = this.el.selectionEnd ?? this.el.value.length;
+            const val = this.el.value;
+            this.el.value = val.substring(0, start) + content + val.substring(end);
+            this.el.selectionStart = this.el.selectionEnd = start + content.length;
+            this.el.focus();
+            this.el.dispatchEvent(new Event('input', { bubbles: true }));
+          });
+
+          // D. Wire HTML "Use this code" template buttons
+          const questionRoot = this.el.closest('.que, .form-item, form') || document;
+          questionRoot.querySelectorAll('.use-template-btn').forEach((btn) => {
+            btn.addEventListener('click', (e) => {
+              e.preventDefault();
+              const sourceSelector = btn.getAttribute('data-source');
+              const pre = sourceSelector ? document.querySelector(sourceSelector) : btn.previousElementSibling;
+              if (pre) {
+                const raw = pre.innerText || pre.textContent || '';
+                const content = raw.endsWith('\n') ? raw : raw + '\n';
+                const start = this.el.selectionStart ?? this.el.value.length;
+                const end = this.el.selectionEnd ?? this.el.value.length;
+                const val = this.el.value;
+                this.el.value = val.substring(0, start) + content + val.substring(end);
+                this.el.selectionStart = this.el.selectionEnd = start + content.length;
+                this.el.focus();
+                this.el.dispatchEvent(new Event('input', { bubbles: true }));
+
+                const orig = btn.innerHTML;
+                btn.innerHTML = '✅ Inserted!';
+                setTimeout(() => btn.innerHTML = orig, 1200);
+              }
+            });
+          });
+
+          // E. Ask Moodle for initial data
+          setTimeout(() => {
+            this.el.dispatchEvent(new CustomEvent(
+              'widget:request-content', {
+                bubbles: true
+              }));
+          }, 50);
+        }
+      }
+
+      // Instantiate the wrapper on your specific textarea
+      const myEditor = document.getElementById('my-custom-editor');
+      new NativeWidgetWrapper(myEditor);
+    })();
+  </script>
+
+  <!-- 4. FOUC Prevention: Hide Moodle's default box instantly -->
+  <script>
+    (function(script) {
+      if (!script) return;
+      const que = script.closest('.que');
+      if (que && que.id) {
+        const style = document.createElement('style');
+        style.textContent = '#' + que.id +
+          ' textarea.qtype_essay_response, ' +
+          '#' + que.id + ' textarea.form-control, ' +
+          '#' + que.id + ' textarea.qtype_coderunner_answer ' +
+          '{ position: absolute !important; left: -9999px !important; visibility: hidden !important; height: 1px !important; }';
+        document.head.appendChild(style);
+      }
+    })(document.currentScript);
+  </script>
+</div>
+
+<!-- 5. Load the Manager (Only needs to load once per page, but safe to repeat) -->
+<p>
+  <script type="module"
+    src="https://python-web-ide.pages.dev/lms-widget-manager.es.js">
+  </script>
+</p>

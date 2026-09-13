@@ -1,0 +1,1054 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Moodle LMS Quiz - LMS Widget Manager Demo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --moodle-primary: #0f6cbf;
+      --moodle-primary-hover: #0c5699;
+      --moodle-bg: #f2f4f8;
+      --moodle-card-bg: #ffffff;
+      --moodle-text: #212529;
+      --moodle-text-muted: #6a737d;
+      --moodle-border: #dee2e6;
+      --moodle-qbox-bg: #f8f9fa;
+      --inspector-bg: #111827;
+      --inspector-card: #1f2937;
+      --inspector-text: #e5e7eb;
+      --inspector-accent: #38bdf8;
+      --inspector-green: #34d399;
+      --inspector-red: #f87171;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background-color: var(--moodle-bg);
+      color: var(--moodle-text);
+      line-height: 1.5;
+    }
+
+    /* Top Navigation Header (Moodle 4.x Style) */
+    .lms-navbar {
+      background-color: #ffffff;
+      border-bottom: 1px solid var(--moodle-border);
+      padding: 10px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+    .lms-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 700;
+      font-size: 18px;
+      color: var(--moodle-primary);
+    }
+    .lms-brand-badge {
+      background: #e7f1fc;
+      color: var(--moodle-primary);
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .lms-user {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+      color: var(--moodle-text-muted);
+    }
+    .lms-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--moodle-primary);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    /* Course Breadcrumbs */
+    .breadcrumb-bar {
+      background: #ffffff;
+      border-bottom: 1px solid var(--moodle-border);
+      padding: 8px 24px;
+      font-size: 13px;
+      color: var(--moodle-text-muted);
+    }
+    .breadcrumb-bar a {
+      color: var(--moodle-primary);
+      text-decoration: none;
+    }
+    .breadcrumb-bar span {
+      margin: 0 6px;
+    }
+
+    /* Main Container Layout */
+    .page-wrapper {
+      max-width: 1480px;
+      margin: 0 auto;
+      padding: 24px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 420px;
+      gap: 24px;
+    }
+
+    @media (max-width: 1100px) {
+      .page-wrapper {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Quiz Header */
+    .quiz-title-card {
+      background: white;
+      border-radius: 8px;
+      padding: 20px 24px;
+      margin-bottom: 24px;
+      border: 1px solid var(--moodle-border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .quiz-title-card h1 {
+      font-size: 22px;
+      font-weight: 700;
+      color: #1a202c;
+    }
+    .quiz-timer {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #fef2f2;
+      border: 1px solid #fee2e2;
+      color: #991b1b;
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    /* Moodle Question Card Structure */
+    .que {
+      background: var(--moodle-card-bg);
+      border: 1px solid var(--moodle-border);
+      border-radius: 8px;
+      margin-bottom: 24px;
+      display: grid;
+      grid-template-columns: 160px 1fr;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    }
+
+    .info {
+      background: var(--moodle-qbox-bg);
+      border-right: 1px solid var(--moodle-border);
+      padding: 18px 14px;
+      font-size: 13px;
+    }
+    .info .no {
+      font-size: 16px;
+      font-weight: 700;
+      color: #111827;
+      margin-bottom: 6px;
+    }
+    .info .status {
+      color: var(--moodle-text-muted);
+      margin-bottom: 6px;
+    }
+    .info .grade {
+      font-weight: 500;
+      margin-bottom: 12px;
+      color: #374151;
+    }
+    .info .flag {
+      color: var(--moodle-primary);
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+    }
+
+    .content {
+      padding: 20px 24px;
+    }
+    .qtext {
+      font-size: 15px;
+      margin-bottom: 16px;
+      color: #1f2937;
+    }
+    .qtext code {
+      background: #f1f5f9;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      color: #0f172a;
+    }
+
+    /* LMS Widget Container */
+    .lms-widget-container {
+      position: relative;
+      margin: 12px 0 6px 0;
+      min-height: 220px;
+      border-radius: 8px;
+    }
+
+    /* Moodle Action Buttons */
+    .quiz-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      margin-top: 16px;
+    }
+    .btn {
+      padding: 9px 18px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: all 0.2s ease;
+    }
+    .btn-primary {
+      background: var(--moodle-primary);
+      color: white;
+    }
+    .btn-primary:hover {
+      background: var(--moodle-primary-hover);
+    }
+    .btn-secondary {
+      background: #ffffff;
+      border-color: var(--moodle-border);
+      color: var(--moodle-text);
+    }
+    .btn-secondary:hover {
+      background: #f8f9fa;
+    }
+
+    /* Right Sidebar: Real-Time Inspector & Chaos Control */
+    .inspector-panel {
+      background: var(--inspector-bg);
+      color: var(--inspector-text);
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+      font-size: 13px;
+      position: sticky;
+      top: 80px;
+      max-height: calc(100vh - 100px);
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .inspector-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid #374151;
+      padding-bottom: 12px;
+    }
+    .inspector-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--inspector-green);
+      box-shadow: 0 0 8px var(--inspector-green);
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    .section-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #9ca3af;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .live-card {
+      background: var(--inspector-card);
+      border-radius: 8px;
+      padding: 12px;
+      border: 1px solid #374151;
+    }
+
+    .card-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--inspector-accent);
+      margin-bottom: 6px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .state-preview {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 4px;
+      padding: 8px;
+      color: #7ee787;
+      max-height: 90px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    /* Chaos Testing Buttons */
+    .chaos-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .chaos-btn {
+      padding: 8px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      border: 1px solid transparent;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      text-align: center;
+      transition: all 0.2s ease;
+    }
+    .btn-fail {
+      background: rgba(239, 68, 68, 0.15);
+      border-color: #ef4444;
+      color: #fca5a5;
+    }
+    .btn-fail:hover {
+      background: rgba(239, 68, 68, 0.3);
+    }
+    .btn-collision {
+      background: rgba(245, 158, 11, 0.15);
+      border-color: #f59e0b;
+      color: #fcd34d;
+    }
+    .btn-collision:hover {
+      background: rgba(245, 158, 11, 0.3);
+    }
+    .btn-crash {
+      background: rgba(59, 130, 246, 0.15);
+      border-color: #3b82f6;
+      color: #93c5fd;
+    }
+    .btn-crash:hover {
+      background: rgba(59, 130, 246, 0.3);
+    }
+    .btn-readonly {
+      background: rgba(168, 85, 247, 0.15);
+      border-color: #a855f7;
+      color: #d8b4fe;
+    }
+    .btn-readonly:hover {
+      background: rgba(168, 85, 247, 0.3);
+    }
+
+    /* Mode Switcher Grid */
+    .mode-switcher-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .mode-btn {
+      background: var(--inspector-card);
+      border: 1px solid #374151;
+      border-radius: 6px;
+      padding: 8px 10px;
+      color: #9ca3af;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 2px;
+      text-align: left;
+      transition: all 0.2s ease;
+    }
+    .mode-btn:hover {
+      background: #283548;
+      color: #ffffff;
+      border-color: #4b5563;
+    }
+    .mode-btn.active {
+      border-color: var(--inspector-accent);
+      background: rgba(56, 189, 248, 0.15);
+      color: #ffffff;
+      box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);
+    }
+    .mode-btn-title {
+      font-size: 12px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .mode-btn-desc {
+      font-size: 10px;
+      color: #9ca3af;
+    }
+    .mode-btn.active .mode-btn-desc {
+      color: #7dd3fc;
+    }
+
+    /* Live Event Stream */
+    .event-log {
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      padding: 8px;
+      max-height: 140px;
+      overflow-y: auto;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .log-item {
+      display: flex;
+      gap: 6px;
+      line-height: 1.3;
+    }
+    .log-time {
+      color: #6e7681;
+    }
+    .log-type {
+      color: #58a6ff;
+      font-weight: 600;
+    }
+    .log-detail {
+      color: #c9d1d9;
+    }
+  </style>
+</head>
+<body data-lms-run-mode="attempt">
+
+  <!-- Top Moodle Navigation -->
+  <header class="lms-navbar">
+    <div class="lms-brand">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 3L1 9l4 2.18v6L12 21l7-3.82v-6l2-1.09V17h2V9L12 3zm6.82 6L12 12.72 5.18 9 12 5.28 18.82 9zM17 15.99l-5 2.73-5-2.73v-3.72L12 15l5-2.73v3.72z"/>
+      </svg>
+      <span>Moodle 4.2 Academy</span>
+      <span class="lms-brand-badge">Quiz Attempt #1</span>
+    </div>
+    <div class="lms-user">
+      <span>Student: Alex Vance (s10928)</span>
+      <div class="lms-avatar">AV</div>
+    </div>
+  </header>
+
+  <!-- Breadcrumb Bar -->
+  <div class="breadcrumb-bar">
+    <a href="#">Home</a> <span>/</span>
+    <a href="#">My courses</a> <span>/</span>
+    <a href="#">CS101: Intro to CS</a> <span>/</span>
+    <a href="#">Midterm Exam</a> <span>/</span>
+    <strong>Attempt 1</strong>
+  </div>
+
+  <div class="page-wrapper">
+    <!-- Main Quiz Attempt Section -->
+    <main>
+      <div class="quiz-title-card">
+        <div>
+          <h1>Midterm Exam: Algorithms & Problem Solving</h1>
+          <p style="color: var(--moodle-text-muted); font-size: 13px; margin-top: 4px;">
+            Answers are automatically saved to Moodle as you work.
+          </p>
+        </div>
+        <div class="quiz-timer">
+          <span>⏱️</span>
+          <span>Time left: 44:38</span>
+        </div>
+      </div>
+
+      <!-- Question 1: IFrame Code Editor -->
+      <div class="que" id="question-1">
+        <div class="info">
+          <div class="no">Question 1</div>
+          <div class="status" id="q1-status">Not yet answered</div>
+          <div class="grade">Marked out of 10.00</div>
+          <div class="flag">⚑ Flag question</div>
+        </div>
+        <div class="content">
+          <div class="qtext">
+            <strong>Task:</strong> Write a Python function <code>fibonacci(n)</code> that computes the n-th Fibonacci number. 
+            Test with <code>fibonacci(10) == 55</code>.
+
+            <p style="margin-top: 12px; font-size: 13px; color: #4b5563; font-weight: 500;">Starter Code:</p>
+            <pre data-lms-template-code data-lms-template-label="✨ Insert Python template" style="background: #f8fafc; padding: 10px; border: 1px solid #e2e8f0; border-radius: 4px; font-size: 13px; color: #334155; margin-top: 6px;">def fibonacci(n):
+    # Starter implementation
+    if n &lt;= 1:
+        return n
+    return fibonacci(n - 1) + fibonacci(n - 2)</pre>
+          </div>
+
+          <!-- Moodle's native textarea (Hidden offscreen by MoodleTextareaAdapter) -->
+          <textarea 
+            id="moodle-textarea-1" 
+            name="q1_answer" 
+            rows="6" 
+            style="width: 100%; display: block;"
+            placeholder="Moodle native form textarea (will be claimed and hidden by MoodleTextareaAdapter)"
+          >def fibonacci(n):
+    if n <= 1:
+        return n
+    return fibonacci(n - 1) + fibonacci(n - 2)
+</textarea>
+
+          <!-- The Widget Container -->
+          <div 
+            id="mount-point-q1" 
+            class="lms-widget-container" 
+            data-lms-target-textarea="#moodle-textarea-1"
+          >
+            <iframe 
+              data-lms-widget="true"
+              src="/widget-frame.html" 
+              title="Python Editor"
+              style="width: 100%; height: 260px; border: none; display: block;"
+            ></iframe>
+          </div>
+
+          <!-- Moodle Manual Grading Comment Area (Revealed in Grade mode) -->
+          <div class="comment-area" id="grading-box-q1" style="display: none; margin-top: 14px; padding: 12px 14px; background: #fefce8; border: 1px solid #fef08a; border-radius: 6px;">
+            <div style="font-weight: 600; font-size: 12px; color: #854d0e; margin-bottom: 4px;">📝 Moodle Manual Grading Form (.comment-area)</div>
+            <div style="font-size: 11px; color: #a16207; margin-bottom: 6px;">Teacher evaluation & grade overrides for Question 1.</div>
+            <textarea class="commenttext" rows="2" style="width: 100%; border: 1px solid #fde047; border-radius: 4px; padding: 6px; font-size: 12px; font-family: inherit;" placeholder="Enter grading comments / feedback..."></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- Question 2: Web Component Scratchpad -->
+      <div class="que" id="question-2">
+        <div class="info">
+          <div class="no">Question 2</div>
+          <div class="status" id="q2-status">Not yet answered</div>
+          <div class="grade">Marked out of 10.00</div>
+        </div>
+        <div class="content">
+          <div class="qtext">
+            <strong>Task:</strong> Write pseudocode or explanation for a Binary Search algorithm. 
+            Demonstrate logarithmic time complexity <code>O(log n)</code>.
+            
+            <p class="mt-4 text-sm text-gray-700 font-medium">Starter Code:</p>
+            <pre data-lms-template-code data-lms-template-label="✨ Use this snippet" style="background: #f8fafc; padding: 12px; border: 1px solid #e2e8f0; border-radius: 4px; font-size: 13px; color: #334155; margin-top: 8px;">
+function solve(input) {
+  // your code here
+}</pre>
+          </div>
+          
+          <!-- Moodle's native textarea (Hidden offscreen by MoodleTextareaAdapter) -->
+          <textarea 
+            id="moodle-textarea-2" 
+            name="q2_answer" 
+            rows="6" 
+            style="width: 100%; display: block;"
+            placeholder="Moodle native form textarea (will be claimed and hidden by MoodleTextareaAdapter)"
+          ></textarea>
+
+          <!-- The Widget Container with Custom Element marked data-lms-widget -->
+          <div 
+            id="mount-point-q2" 
+            class="lms-widget-container" 
+            data-lms-target-textarea="#moodle-textarea-2"
+          >
+            <code-scratchpad data-lms-widget="true"></code-scratchpad>
+          </div>
+
+          <!-- Moodle Manual Grading Comment Area (Revealed in Grade mode) -->
+          <div class="comment-area" id="grading-box-q2" style="display: none; margin-top: 14px; padding: 12px 14px; background: #fefce8; border: 1px solid #fef08a; border-radius: 6px;">
+            <div style="font-weight: 600; font-size: 12px; color: #854d0e; margin-bottom: 4px;">📝 Moodle Manual Grading Form (.comment-area)</div>
+            <div style="font-size: 11px; color: #a16207; margin-bottom: 6px;">Teacher evaluation & grade overrides for Question 2.</div>
+            <textarea class="commenttext" rows="2" style="width: 100%; border: 1px solid #fde047; border-radius: 4px; padding: 6px; font-size: 12px; font-family: inherit;" placeholder="Enter grading comments / feedback..."></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="quiz-actions">
+        <button class="btn btn-secondary" type="button">Previous page</button>
+        <button class="btn btn-primary" type="button">Finish attempt...</button>
+      </div>
+    </main>
+
+    <!-- Developer & Under-the-Hood Inspector Panel -->
+    <aside class="inspector-panel">
+      <div class="inspector-header">
+        <div class="inspector-title">
+          <div class="pulse-dot"></div>
+          <span>LMS Adapter Live Inspector</span>
+        </div>
+        <span style="font-size: 11px; color: #9ca3af;">Orchestrator v1.0</span>
+      </div>
+
+      <!-- Live Moodle Native Form State -->
+      <div>
+        <div class="section-label">
+          <span>1. Native Moodle Textarea State</span>
+          <span style="color: var(--inspector-green);" id="moodle-autosave-indicator">● Autosave Ready</span>
+        </div>
+
+        <div class="live-card">
+          <div class="card-title">
+            <span>#moodle-textarea-1 (Q1: Iframe)</span>
+            <span id="q1-byte-count" style="color: #9ca3af; font-weight: normal;">0 bytes</span>
+          </div>
+          <div class="state-preview" id="preview-textarea-1">(Waiting for initial sync...)</div>
+        </div>
+
+        <div class="live-card" style="margin-top: 8px;">
+          <div class="card-title">
+            <span>#moodle-textarea-2 (Q2: Web Component)</span>
+            <span id="q2-byte-count" style="color: #9ca3af; font-weight: normal;">0 bytes</span>
+          </div>
+          <div class="state-preview" id="preview-textarea-2">(Empty)</div>
+        </div>
+      </div>
+
+      <!-- LocalStorage Crash Recovery -->
+      <div>
+        <div class="section-label">
+          <span>2. LocalStorage Draft Recovery</span>
+          <span style="color: var(--inspector-accent);">Safe Backup</span>
+        </div>
+        <div class="live-card">
+          <div class="card-title">
+            <span id="ls-key-title">Backup Key Active</span>
+            <span style="color: #34d399;">Mirrored</span>
+          </div>
+          <div class="state-preview" id="ls-preview">Reading storage...</div>
+        </div>
+      </div>
+
+      <!-- Context Sniffer (RunMode Simulator) -->
+      <div>
+        <div class="section-label">
+          <span>3. Context Sniffer: RunMode</span>
+          <span id="active-runmode-indicator" style="color: #38bdf8; font-weight: 700;">ATTEMPT</span>
+        </div>
+        <div class="mode-switcher-grid">
+          <button class="mode-btn active" id="btn-mode-attempt" data-mode="attempt" type="button">
+            <span class="mode-btn-title">📝 Attempt</span>
+            <span class="mode-btn-desc">Student Quiz Environment</span>
+          </button>
+          <button class="mode-btn" id="btn-mode-edit" data-mode="edit" type="button">
+            <span class="mode-btn-title">🛠️ Edit / Author</span>
+            <span class="mode-btn-desc">Teacher Question Bank</span>
+          </button>
+          <button class="mode-btn" id="btn-mode-grade" data-mode="grade" type="button">
+            <span class="mode-btn-title">⚖️ Grade</span>
+            <span class="mode-btn-desc">Moodle .comment-area Form</span>
+          </button>
+          <button class="mode-btn" id="btn-mode-review" data-mode="review" type="button">
+            <span class="mode-btn-title">🔍 Review</span>
+            <span class="mode-btn-desc">Post-Quiz Locked View</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Chaos Simulation Controls -->
+      <div>
+        <div class="section-label">
+          <span>4. Chaos & Fail-Fast Testing</span>
+          <span style="color: #f59e0b;">Interactive</span>
+        </div>
+        <div class="chaos-grid">
+          <button class="chaos-btn btn-fail" id="btn-simulate-fail" type="button">
+            <span>💥 Save Rejection</span>
+            <span style="font-size: 10px; opacity: 0.8;">Locks & Blurs Widget</span>
+          </button>
+          <button class="chaos-btn btn-collision" id="btn-simulate-collision" type="button">
+            <span>⚠️ Test Collision</span>
+            <span style="font-size: 10px; opacity: 0.8;">Binds 2nd Widget to Q1</span>
+          </button>
+          <button class="chaos-btn btn-crash" id="btn-simulate-crash" type="button">
+            <span>🔄 Crash Recovery</span>
+            <span style="font-size: 10px; opacity: 0.8;">Wipes DOM & Restores</span>
+          </button>
+          <button class="chaos-btn btn-readonly" id="btn-toggle-readonly" type="button">
+            <span>🔒 Read-Only</span>
+            <span style="font-size: 10px; opacity: 0.8;">Simulates Submitted</span>
+          </button>
+          <button class="chaos-btn" id="btn-toggle-answerbox" type="button" style="grid-column: span 2; background: rgba(34, 197, 94, 0.15); border: 1px solid #22c55e; color: #86efac;">
+            <span>👁️ data-lms-widget-show-answerbox</span>
+            <span style="font-size: 10px; opacity: 0.85;">Toggle Visible Moodle Textarea (Debug)</span>
+          </button>
+          <button class="chaos-btn" id="btn-delete-textarea" type="button" style="grid-column: span 2; background: rgba(239, 68, 68, 0.15); border: 1px solid #ef4444; color: #fca5a5;">
+            <span>🗑️ Delete Answerbox</span>
+            <span style="font-size: 10px; opacity: 0.85;">Removes textarea from DOM (Tests Fail-Fast Lockdown)</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Live Transport Event Log -->
+      <div>
+        <div class="section-label">
+          <span>5. Live Transport Event Log</span>
+          <button id="btn-clear-log" style="background: none; border: none; color: #9ca3af; font-size: 10px; cursor: pointer;">Clear</button>
+        </div>
+        <div class="event-log" id="event-log-container">
+          <div class="log-item">
+            <span class="log-time">00:00:00</span>
+            <span class="log-type">[INIT]</span>
+            <span class="log-detail">Bootstrapper scanning mount points...</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- Load Web Component and Library -->
+  <script type="module" src="/src/demo/custom-widget.ts"></script>
+  <script type="module" src="/src/index.ts"></script>
+
+  <!-- Live Inspector & Chaos Simulation Script -->
+  <script type="module">
+    import { activeControllers, bootstrap } from '/src/index.ts';
+
+    const textarea1 = document.getElementById('moodle-textarea-1');
+    const textarea2 = document.getElementById('moodle-textarea-2');
+    const preview1 = document.getElementById('preview-textarea-1');
+    const preview2 = document.getElementById('preview-textarea-2');
+    const q1ByteCount = document.getElementById('q1-byte-count');
+    const q2ByteCount = document.getElementById('q2-byte-count');
+    const lsPreview = document.getElementById('ls-preview');
+    const eventLogContainer = document.getElementById('event-log-container');
+    const autosaveIndicator = document.getElementById('moodle-autosave-indicator');
+
+    function logEvent(type, detail) {
+      const now = new Date();
+      const timeStr = now.toTimeString().split(' ')[0] + '.' + String(now.getMilliseconds()).padStart(3, '0');
+      const item = document.createElement('div');
+      item.className = 'log-item';
+      item.innerHTML = `
+        <span class="log-time">${timeStr}</span>
+        <span class="log-type">${type}</span>
+        <span class="log-detail">${detail}</span>
+      `;
+      eventLogContainer.prepend(item);
+      while (eventLogContainer.children.length > 25) {
+        eventLogContainer.removeChild(eventLogContainer.lastChild);
+      }
+    }
+
+    function updateLiveState() {
+      if (textarea1 && preview1) {
+        if (!textarea1.isConnected) {
+          preview1.textContent = '❌ [DISCONNECTED / DELETED FROM DOM]';
+          preview1.style.color = '#f87171';
+          q1ByteCount.textContent = 'Detached';
+          autosaveIndicator.textContent = '⚠️ Textarea Missing';
+          autosaveIndicator.style.color = '#ef4444';
+        } else {
+          const val = textarea1.value || '';
+          preview1.textContent = val || '(Empty)';
+          preview1.style.color = '#7ee787';
+          q1ByteCount.textContent = `${new Blob([val]).size} bytes`;
+        }
+      }
+      if (textarea2 && preview2) {
+        if (!textarea2.isConnected) {
+          preview2.textContent = '❌ [DISCONNECTED / DELETED FROM DOM]';
+          preview2.style.color = '#f87171';
+          q2ByteCount.textContent = 'Detached';
+        } else {
+          const val = textarea2.value || '';
+          preview2.textContent = val || '(Empty)';
+          preview2.style.color = '#7ee787';
+          q2ByteCount.textContent = `${new Blob([val]).size} bytes`;
+        }
+      }
+
+      // Check localStorage
+      try {
+        const keys = Object.keys(localStorage).filter(k => k.startsWith('lms_widget_backup_'));
+        if (keys.length > 0) {
+          const contents = keys.map(k => `${k}:\n${localStorage.getItem(k)}`).join('\n\n');
+          lsPreview.textContent = contents;
+        } else {
+          lsPreview.textContent = '(No local backups found)';
+        }
+      } catch (e) {
+        lsPreview.textContent = 'Storage unavailable';
+      }
+    }
+
+    // Monitor input and change events from MoodleTextareaAdapter
+    [textarea1, textarea2].forEach((ta, idx) => {
+      if (!ta) return;
+      ta.addEventListener('input', () => {
+        if (!ta.isConnected) {
+          logEvent('[ERROR]', `Question ${idx + 1} textarea received event but is DETACHED!`);
+          autosaveIndicator.textContent = '⚠️ Save Failed: Detached';
+          autosaveIndicator.style.color = '#ef4444';
+          updateLiveState();
+          return;
+        }
+        logEvent('[MOODLE_DOM]', `Question ${idx + 1} textarea received input event.`);
+        autosaveIndicator.textContent = '● Autosaving...';
+        autosaveIndicator.style.color = '#f59e0b';
+        updateLiveState();
+        setTimeout(() => {
+          if (ta.isConnected) {
+            autosaveIndicator.textContent = '● Autosave Synced';
+            autosaveIndicator.style.color = '#34d399';
+          }
+        }, 300);
+      });
+
+      ta.addEventListener('change', () => {
+        logEvent('[MOODLE_AUTOSAVE]', `Moodle form change registered for Q${idx + 1}.`);
+      });
+    });
+
+    // Intercept postMessage for logging
+    window.addEventListener('message', (e) => {
+      if (e.data && e.data.type) {
+        logEvent('[POST_MESSAGE]', `${e.data.type} from iframe.`);
+      }
+    });
+
+    // Intercept CustomEvents on mount point 2
+    const mount2 = document.getElementById('mount-point-q2');
+    if (mount2) {
+      ['widget:sync-content', 'widget:sync-ack', 'widget:load-content', 'widget:lockdown'].forEach(evtName => {
+        mount2.addEventListener(evtName, (e) => {
+          logEvent('[DOM_EVENT]', `${evtName} captured on mount-point.`);
+        });
+      });
+    }
+
+    // Initial update
+    setTimeout(updateLiveState, 400);
+
+    // Chaos Button 1: Simulate Save Rejection / Fatal Error
+    document.getElementById('btn-simulate-fail')?.addEventListener('click', () => {
+      logEvent('[CHAOS]', 'Simulating host write failure on Question 1...');
+      if (activeControllers.length > 0) {
+        const controller = activeControllers[0];
+        controller.triggerErrorState('Simulated storage write rejection test.');
+        logEvent('[LOCKDOWN]', 'Triggered fail-fast visual blur and lockdown banner.');
+      }
+    });
+
+    // Chaos Button 2: Test Collision Prevention
+    document.getElementById('btn-simulate-collision')?.addEventListener('click', () => {
+      logEvent('[CHAOS]', 'Attempting duplicate widget mount point bound to #moodle-textarea-1...');
+      const container = document.getElementById('question-1')?.querySelector('.content');
+      if (container) {
+        const duplicateMount = document.createElement('div');
+        duplicateMount.className = 'lms-widget-container';
+        duplicateMount.setAttribute('data-lms-target-textarea', '#moodle-textarea-1');
+        duplicateMount.innerHTML = '<iframe data-lms-widget="true" src="/widget-frame.html" style="width:100%;height:150px;border:none;"></iframe>';
+        container.appendChild(duplicateMount);
+
+        // Run bootstrapper
+        bootstrap();
+        logEvent('[COLLISION_CHECK]', 'Bootstrapper aborted initialization and displayed collision banner.');
+      }
+    });
+
+    // Chaos Button 3: Crash Recovery Test
+    document.getElementById('btn-simulate-crash')?.addEventListener('click', () => {
+      logEvent('[CHAOS]', 'Simulating browser crash / cleared DOM on Q1...');
+      if (textarea1) {
+        textarea1.value = ''; // simulate wiped value
+        updateLiveState();
+        logEvent('[CRASH]', 'Textarea wiped to empty.');
+
+        setTimeout(() => {
+          logEvent('[RECOVERY]', 'Attempting crash recovery from localStorage draft...');
+          // Find key and re-trigger load
+          const keys = Object.keys(localStorage).filter(k => k.startsWith('lms_widget_backup_'));
+          if (keys.length > 0 && textarea1) {
+            textarea1.value = localStorage.getItem(keys[0]) || '';
+            textarea1.dispatchEvent(new Event('input', { bubbles: true }));
+            logEvent('[RESTORED]', `Successfully restored ${textarea1.value.length} characters from offline draft.`);
+          }
+        }, 500);
+      }
+    });
+
+    // Chaos Button 4: Read-Only Mode
+    document.getElementById('btn-toggle-readonly')?.addEventListener('click', () => {
+      if (textarea1 && textarea2) {
+        const isNowReadOnly = !textarea1.readOnly;
+        textarea1.readOnly = isNowReadOnly;
+        textarea2.readOnly = isNowReadOnly;
+        logEvent('[MODE]', `Set quiz read-only = ${isNowReadOnly}`);
+        alert(`Quiz Read-Only status is now: ${isNowReadOnly ? 'LOCKED (Submitted)' : 'UNLOCKED'}`);
+      }
+    });
+
+    // Debug Button: data-lms-widget-show-answerbox Toggle
+    document.getElementById('btn-toggle-answerbox')?.addEventListener('click', () => {
+      const q1Container = document.getElementById('mount-point-q1');
+      if (!textarea1) return;
+
+      const isHidden = textarea1.style.position === 'absolute' || textarea1.style.opacity === '0';
+      if (isHidden) {
+        textarea1.setAttribute('data-lms-widget-show-answerbox', 'true');
+        q1Container?.setAttribute('data-lms-widget-show-answerbox', 'true');
+        textarea1.style.position = '';
+        textarea1.style.left = '';
+        textarea1.style.opacity = '';
+        textarea1.style.pointerEvents = '';
+        textarea1.removeAttribute('tabindex');
+        textarea1.removeAttribute('aria-hidden');
+        logEvent('[DEBUG]', 'data-lms-widget-show-answerbox set (Moodle textarea is now visible).');
+      } else {
+        textarea1.removeAttribute('data-lms-widget-show-answerbox');
+        q1Container?.removeAttribute('data-lms-widget-show-answerbox');
+        textarea1.style.position = 'absolute';
+        textarea1.style.left = '-9999px';
+        textarea1.style.opacity = '0';
+        textarea1.style.pointerEvents = 'none';
+        textarea1.setAttribute('tabindex', '-1');
+        textarea1.setAttribute('aria-hidden', 'true');
+        logEvent('[DEBUG]', 'data-lms-widget-show-answerbox removed (Moodle textarea hidden offscreen).');
+      }
+    });
+
+    // Chaos Button: Delete Textarea (Fail-Fast Lockdown Test)
+    document.getElementById('btn-delete-textarea')?.addEventListener('click', () => {
+      logEvent('[CHAOS]', 'Deleting #moodle-textarea-1 from DOM...');
+      if (textarea1 && textarea1.parentNode) {
+        textarea1.parentNode.removeChild(textarea1);
+        logEvent('[CHAOS]', '#moodle-textarea-1 removed from DOM. Verifying fail-fast lockdown...');
+        updateLiveState();
+      } else {
+        logEvent('[CHAOS]', 'Textarea already removed or missing parent.');
+      }
+    });
+
+    // RunMode Simulator Logic
+    const modeButtons = document.querySelectorAll('.mode-btn');
+    const runModeIndicator = document.getElementById('active-runmode-indicator');
+    const breadcrumbBar = document.querySelector('.breadcrumb-bar');
+    const lmsBrandBadge = document.querySelector('.lms-brand-badge');
+    const gradingBoxQ1 = document.getElementById('grading-box-q1');
+    const gradingBoxQ2 = document.getElementById('grading-box-q2');
+
+    function applyRunModeSimulation(mode) {
+      modeButtons.forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.mode === mode);
+      });
+      if (runModeIndicator) {
+        runModeIndicator.textContent = mode.toUpperCase();
+      }
+
+      let isReadOnly = false;
+      if (mode === 'attempt') {
+        document.body.setAttribute('data-lms-run-mode', 'attempt');
+        if (breadcrumbBar) {
+          breadcrumbBar.innerHTML = '<a href="#">Home</a> <span>/</span> <a href="#">My courses</a> <span>/</span> <a href="#">CS101</a> <span>/</span> <a href="#">Midterm Exam</a> <span>/</span> <strong>Attempt 1</strong>';
+        }
+        if (lmsBrandBadge) lmsBrandBadge.textContent = 'Quiz Attempt #1';
+        if (gradingBoxQ1) gradingBoxQ1.style.display = 'none';
+        if (gradingBoxQ2) gradingBoxQ2.style.display = 'none';
+        if (textarea1) textarea1.readOnly = false;
+        if (textarea2) textarea2.readOnly = false;
+        isReadOnly = false;
+      } else if (mode === 'edit') {
+        document.body.setAttribute('data-lms-run-mode', 'edit');
+        if (breadcrumbBar) {
+          breadcrumbBar.innerHTML = '<a href="#">Home</a> <span>/</span> <a href="#">Administration</a> <span>/</span> <a href="#">Question Bank</a> <span>/</span> <strong>editquestion.php?id=104</strong>';
+        }
+        if (lmsBrandBadge) lmsBrandBadge.textContent = 'Teacher Question Editor';
+        if (gradingBoxQ1) gradingBoxQ1.style.display = 'none';
+        if (gradingBoxQ2) gradingBoxQ2.style.display = 'none';
+        if (textarea1) textarea1.readOnly = false;
+        if (textarea2) textarea2.readOnly = false;
+        isReadOnly = false;
+      } else if (mode === 'grade') {
+        document.body.setAttribute('data-lms-run-mode', 'grade');
+        if (breadcrumbBar) {
+          breadcrumbBar.innerHTML = '<a href="#">Home</a> <span>/</span> <a href="#">CS101</a> <span>/</span> <a href="#">Midterm Exam</a> <span>/</span> <a href="#">report.php?mode=grading</a> <span>/</span> <strong>Grading Student s10928</strong>';
+        }
+        if (lmsBrandBadge) lmsBrandBadge.textContent = 'Teacher Grading View';
+        if (gradingBoxQ1) gradingBoxQ1.style.display = 'block';
+        if (gradingBoxQ2) gradingBoxQ2.style.display = 'block';
+        if (textarea1) textarea1.readOnly = true;
+        if (textarea2) textarea2.readOnly = true;
+        isReadOnly = true;
+      } else if (mode === 'review') {
+        document.body.setAttribute('data-lms-run-mode', 'review');
+        if (breadcrumbBar) {
+          breadcrumbBar.innerHTML = '<a href="#">Home</a> <span>/</span> <a href="#">CS101</a> <span>/</span> <a href="#">Midterm Exam</a> <span>/</span> <strong>review.php?attempt=1 (Finished)</strong>';
+        }
+        if (lmsBrandBadge) lmsBrandBadge.textContent = 'Submission Review';
+        if (gradingBoxQ1) gradingBoxQ1.style.display = 'none';
+        if (gradingBoxQ2) gradingBoxQ2.style.display = 'none';
+        if (textarea1) textarea1.readOnly = true;
+        if (textarea2) textarea2.readOnly = true;
+        isReadOnly = true;
+      }
+
+      logEvent('[RUN_MODE_SNIFF]', `Host environment switched to '${mode}'. Updating widget controllers...`);
+
+      // Update active controllers with the new runMode
+      activeControllers.forEach((ctrl) => {
+        ctrl.updateConfig({
+          runMode: mode,
+          isReadOnly: isReadOnly
+        });
+      });
+    }
+
+    modeButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const mode = btn.getAttribute('data-mode');
+        if (mode) applyRunModeSimulation(mode);
+      });
+    });
+
+    document.getElementById('btn-clear-log')?.addEventListener('click', () => {
+      eventLogContainer.innerHTML = '';
+    });
+  </script>
+</body>
+</html>
