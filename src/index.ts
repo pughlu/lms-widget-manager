@@ -1,4 +1,4 @@
-import { IStorageAdapter, IMessengerAdapter } from './interfaces/contracts';
+import { IStorageAdapter, IMessengerAdapter, WidgetMessageTypes } from './interfaces/contracts';
 import { MoodleTextareaAdapter } from './adapters/storage/moodle-textarea';
 import { IframeMessengerAdapter } from './adapters/messenger/iframe';
 import { DOMEventMessengerAdapter } from './adapters/messenger/web-component';
@@ -304,22 +304,48 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
     if (typeof data === 'string') {
       try { data = JSON.parse(data); } catch { return; }
     }
-    if (data && data.type === 'WIDGET_READY') {
-      console.log(`[LMS Widget Manager] Received WIDGET_READY handshake from an iframe.`);
+    if (data && data.type) {
+      // Pragmatic Handshake: If we receive WIDGET_READY or *any* known widget message from an uninitialized iframe, 
+      // it means the iframe is alive and trying to talk to us. We should initialize it immediately.
+      const isKnownMessage = Object.values(WidgetMessageTypes).includes(data.type);
       
-      // Find which uninitialized iframe sent this message
-      const iframes = document.querySelectorAll<HTMLIFrameElement>('.lms-widget-container:not([data-lms-widget-initialized]) iframe, .lms-widget-container[data-lms-widget-initialized="pending"] iframe');
-      for (const iframe of Array.from(iframes)) {
-        if (iframe.contentWindow === event.source) {
-          const container = iframe.closest('.lms-widget-container') as HTMLElement;
-          if (container) {
-            console.log(`[LMS Widget Manager] Matching iframe found. Initializing container...`);
-            const controller = WidgetBootstrapper.initializeContainer(container);
-            if (controller) {
-              activeControllers.push(controller);
+      if (isKnownMessage) {
+        if (data.type === 'WIDGET_READY') {
+          console.log(`[LMS Widget Manager] Received WIDGET_READY handshake from an iframe.`);
+        }
+        
+        // Find which uninitialized or pending iframe sent this message
+        const iframes = document.querySelectorAll<HTMLIFrameElement>('.lms-widget-container:not([data-lms-widget-initialized]) iframe, .lms-widget-container[data-lms-widget-initialized="pending"] iframe');
+        let justInitialized = false;
+
+        for (const iframe of Array.from(iframes)) {
+          if (iframe.contentWindow === event.source) {
+            const container = iframe.closest('.lms-widget-container') as HTMLElement;
+            if (container) {
+              console.log(`[LMS Widget Manager] Matching pending iframe found (Trigger: ${data.type}). Initializing container...`);
+              const controller = WidgetBootstrapper.initializeContainer(container);
+              if (controller) {
+                activeControllers.push(controller);
+                justInitialized = true;
+              }
             }
+            break;
           }
-          break;
+        }
+
+        // If we just initialized the controller using a message OTHER than WIDGET_READY (e.g. SYNC_CONTENT),
+        // the new IframeMessengerAdapter missed the event listener for THIS specific message because it was just created.
+        // We can manually re-dispatch it to ensure it's not dropped.
+        if (justInitialized && data.type !== 'WIDGET_READY') {
+           console.log(`[LMS Widget Manager] Re-routing initial ${data.type} message to the newly created controller.`);
+           // Push to end of event loop to ensure IframeMessengerAdapter has finished binding its listeners
+           setTimeout(() => {
+             window.dispatchEvent(new MessageEvent('message', {
+               data: event.data,
+               origin: event.origin,
+               source: event.source
+             }));
+           }, 0);
         }
       }
     }
