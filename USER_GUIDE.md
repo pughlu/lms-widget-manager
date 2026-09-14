@@ -96,8 +96,23 @@ To embed a widget, wrap your widget element inside a container with the class `.
 </div>
 ```
 
-> **Note**: The manager automatically scans for `.lms-widget-container` elements. If the widget element inside (`[data-lms-widget]`) is rendered asynchronously or loaded via JavaScript, a patient `MutationObserver` will wait for it to mount and wire it up automatically.
+#### Asynchronous Bootstrapping & The Handshake Protocol
 
+LMSWidgetManager uses a highly decoupled, asynchronous bootstrapping system to eliminate race conditions between scripts loading.
+
+1. **Host Page (Mounting):** When injecting a widget container dynamically via JavaScript, dispatch a custom DOM event so the manager knows to scan the page:
+   ```javascript
+   container.dispatchEvent(new CustomEvent('lms-widget:mount', {
+     bubbles: true,
+     detail: { container: container }
+   }));
+   ```
+2. **Iframe Widget (Readiness):** The manager will wait patiently for the iframe to load. Once your iframe is fully rendered and ready to receive code, emit the ready signal (or simply send your first `SYNC_CONTENT`). The manager will instantly initialize the connection:
+   ```javascript
+   window.parent.postMessage({ type: 'WIDGET_READY' }, '*');
+   ```
+
+> **Note**: For Web Component widgets, or iframes embedded statically in HTML before the manager script loads, the manager will auto-bootstrap on `DOMContentLoaded`.
 ---
 
 ### Targeting Moodle Textareas
@@ -281,6 +296,7 @@ HOST (Manager)                                        WIDGET
 
 | Message Type | Direction | Payload Structure | Purpose |
 | :--- | :--- | :--- | :--- |
+| `WIDGET_READY` | Widget ➔ Host | `undefined` or `{}` | Informs the host that the iframe has booted and is ready to connect. |
 | `LOAD_CONTENT` | Host ➔ Widget | `{ content: string, config: IWidgetConfig }` | Pushes initial code/content and environment settings on boot. |
 | `REQUEST_CONTENT` | Widget ➔ Host | `undefined` or `{}` | Asks the host to re-send current storage state and config. |
 | `SYNC_CONTENT` | Widget ➔ Host | `{ content: string, msgId?: string }` or `string` | Widget submits new user content to be saved to Moodle. |
