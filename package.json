@@ -8,6 +8,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "prepare": "npm run build",
     "build": "vite build && tsc --emitDeclarationOnly",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
