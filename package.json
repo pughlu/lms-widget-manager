@@ -13,9 +13,6 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
-  "files": [
-    "dist"
-  ],
   "keywords": [
     "moodle",
     "lms",
