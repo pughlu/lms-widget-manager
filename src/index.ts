@@ -177,7 +177,25 @@ export class WidgetBootstrapper {
     const selector = container.getAttribute('data-lms-target-textarea');
 
     if (selector) {
-      const el = document.querySelector(selector);
+      let el: Element | null = null;
+      if (selector.startsWith('#')) {
+        el = document.getElementById(selector.slice(1));
+      }
+      if (!el) {
+        try {
+          el = document.querySelector(selector);
+        } catch {
+          // If querySelector failed due to unescaped special characters (e.g. colons in Moodle IDs), try escaping
+          try {
+            if (window.CSS && CSS.escape) {
+              const escaped = selector.replace(/#([^. >+~:[\]]+)/g, (_, id) => '#' + CSS.escape(id));
+              el = document.querySelector(escaped);
+            }
+          } catch {
+            // ignore
+          }
+        }
+      }
       if (el && el.tagName?.toLowerCase() === 'textarea') {
         return el as HTMLTextAreaElement;
       }
