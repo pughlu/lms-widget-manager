@@ -37,16 +37,23 @@ export class WidgetBootstrapper {
     const controllers: WidgetController[] = [];
 
     containers.forEach((container) => {
-      const controller = WidgetBootstrapper.initializeContainer(container);
-      if (controller) {
-        controllers.push(controller);
+      const hasIframe = container.querySelector('iframe') !== null;
+      
+      if (hasIframe) {
+        // Enforce Handshake: Mark as pending. Initialization happens upon receiving WIDGET_READY.
+        container.setAttribute('data-lms-widget-initialized', 'pending');
+      } else {
+        const controller = WidgetBootstrapper.initializeContainer(container);
+        if (controller) {
+          controllers.push(controller);
+        }
       }
     });
 
     return controllers;
   }
 
-  private static initializeContainer(container: HTMLElement): WidgetController | null {
+  public static initializeContainer(container: HTMLElement): WidgetController | null {
     // 1. Locate the corresponding Moodle textarea
     const targetTextarea = WidgetBootstrapper.findTargetTextarea(container);
 
@@ -158,13 +165,6 @@ export class WidgetBootstrapper {
       
       if (originAttr) {
         targetOrigin = originAttr;
-      } else if (widgetElement.hasAttribute('src')) {
-        try {
-          const url = new URL(widgetElement.getAttribute('src') || '', window.location.href);
-          targetOrigin = url.origin;
-        } catch {
-          // Ignore invalid URLs
-        }
       }
       return new IframeMessengerAdapter(widgetElement as HTMLIFrameElement, targetOrigin);
     }
@@ -291,6 +291,39 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
     // Already loaded or interactive
     bootstrap();
   }
+
+  // Observer Pattern: Bootstrapper listens for dynamic mounts
+  document.addEventListener('lms-widget:mount', () => {
+    console.log(`[LMS Widget Manager] Caught 'lms-widget:mount' event. Running bootstrapper...`);
+    bootstrap();
+  });
+
+  // Handshake Protocol: Listen for WIDGET_READY
+  window.addEventListener('message', (event: MessageEvent) => {
+    let data = event.data;
+    if (typeof data === 'string') {
+      try { data = JSON.parse(data); } catch { return; }
+    }
+    if (data && data.type === 'WIDGET_READY') {
+      console.log(`[LMS Widget Manager] Received WIDGET_READY handshake from an iframe.`);
+      
+      // Find which uninitialized iframe sent this message
+      const iframes = document.querySelectorAll<HTMLIFrameElement>('.lms-widget-container:not([data-lms-widget-initialized]) iframe, .lms-widget-container[data-lms-widget-initialized="pending"] iframe');
+      for (const iframe of Array.from(iframes)) {
+        if (iframe.contentWindow === event.source) {
+          const container = iframe.closest('.lms-widget-container') as HTMLElement;
+          if (container) {
+            console.log(`[LMS Widget Manager] Matching iframe found. Initializing container...`);
+            const controller = WidgetBootstrapper.initializeContainer(container);
+            if (controller) {
+              activeControllers.push(controller);
+            }
+          }
+          break;
+        }
+      }
+    }
+  });
 
   // Global Event Bus for Host Scripts (Decoupled Integration)
   document.addEventListener('lms-widget:insert-content', (event: Event) => {

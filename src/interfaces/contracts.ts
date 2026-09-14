@@ -133,6 +133,7 @@ export const WidgetMessageTypes = {
   INSERT_CONTENT: 'INSERT_CONTENT',
   SYNC_ACK: 'SYNC_ACK',
   ERROR_LOCKDOWN: 'ERROR_LOCKDOWN',
+  WIDGET_READY: 'WIDGET_READY',
 } as const;
 
 export type WidgetMessageType = (typeof WidgetMessageTypes)[keyof typeof WidgetMessageTypes];
