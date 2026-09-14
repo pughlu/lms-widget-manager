@@ -100,6 +100,7 @@ export class IframeMessengerAdapter implements IMessengerAdapter {
    * Sends content insertion to the widget.
    */
   public sendInsertContent(content: string): void {
+    console.log('[IframeMessengerAdapter] Posting INSERT_CONTENT to iframe window:', { content });
     this.post({
       type: WidgetMessageTypes.INSERT_CONTENT,
       payload: {
@@ -112,6 +113,7 @@ export class IframeMessengerAdapter implements IMessengerAdapter {
    * Sends synchronization acknowledgement back to the widget.
    */
   public sendSyncAck(msgId: string, serverHash: string): void {
+    console.log('[IframeMessengerAdapter] Posting SYNC_ACK to iframe window:', { msgId, serverHash });
     this.post({
       type: WidgetMessageTypes.SYNC_ACK,
       msgId,

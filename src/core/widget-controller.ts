@@ -130,6 +130,7 @@ export class WidgetController {
       return false;
     }
 
+    console.log(`[WidgetController] Forwarding insertContent to widget messenger:`, content);
     this.messenger.sendInsertContent(content);
     return true;
   }
@@ -215,6 +216,7 @@ export class WidgetController {
 
     if (success) {
       const serverHash = this.computeHash(content);
+      console.log(`[WidgetController] Stored content successfully (hash: ${serverHash}, msgId: ${msgId || 'none'}). Sending SYNC_ACK.`);
       this.messenger.sendSyncAck(msgId, serverHash);
     } else {
       console.error('[WidgetController] Storage save returned false. Triggering Fatal Error State.');
